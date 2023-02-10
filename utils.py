@@ -10,6 +10,9 @@ import math
 
 import torch.nn as nn
 import torch.nn.init as init
+import torchvision
+import torchvision.transforms as transforms
+
 
 
 def get_mean_and_std(dataset):
@@ -122,3 +125,16 @@ def format_time(seconds):
     if f == '':
         f = '0ms'
     return f
+
+def get_cifar10_trainloader_with_transform(transforms):
+    trainset = torchvision.datasets.CIFAR10(
+    root='./data', train=True, download=True, transform=transforms)
+    trainloader = torch.utils.data.DataLoader(
+    trainset, batch_size=128, shuffle=True, num_workers=2)
+
+
+def get_cifar10_test_loader_with_transform(transforms):
+    testset = torchvision.datasets.CIFAR10(
+    root='./data', train=False, download=True, transform=transforms)
+    testloader = torch.utils.data.DataLoader(
+    testset, batch_size=100, shuffle=False, num_workers=2)
