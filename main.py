@@ -10,6 +10,8 @@ import torchvision.transforms as transforms
 
 import os
 
+from tqdm import tqdm
+
 from .models import resnet
 from .utils import progress_bar
 
@@ -97,7 +99,7 @@ scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=200)
 
 # Training
 def train(epoch):
-    print('\nEpoch: %d' % epoch)
+    pbar = tqdm(train_loader)
     net.train()
     train_loss = 0
     correct = 0
@@ -115,8 +117,7 @@ def train(epoch):
         total += targets.size(0)
         correct += predicted.eq(targets).sum().item()
 
-        progress_bar(batch_idx, len(trainloader), 'Loss: %.3f | Acc: %.3f%% (%d/%d)'
-                     % (train_loss/(batch_idx+1), 100.*correct/total, correct, total))
+        pbar.set_description(desc= f'Epoch={epoch} Loss={train_loss/(batch_idx+1)} batch_id={batch_idx} Accuracy={100*correct/total:0.2f}%')
 
 
 def test(epoch):
