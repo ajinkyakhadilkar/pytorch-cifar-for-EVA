@@ -13,9 +13,11 @@ import os
 from tqdm import tqdm
 
 from .models import resnet
-from .utils import progress_bar
+from . import utils
+
 
 net = resnet.ResNet18()
+grad_image_test = []
 
 def set_net(net):
   net = this.net
@@ -34,17 +36,9 @@ start_epoch = 0  # start from epoch 0 or last checkpoint epoch
 
 # Data
 print('==> Preparing data..')
-transform_train = transforms.Compose([
-    transforms.RandomCrop(32, padding=4),
-    transforms.RandomHorizontalFlip(),
-    transforms.ToTensor(),
-    transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
-])
+transform_train = utils.get_train_transforms()
 
-transform_test = transforms.Compose([
-    transforms.ToTensor(),
-    transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
-])
+transform_test = utils.get_test_transforms()
 
 trainset = torchvision.datasets.CIFAR10(
     root='./data', train=True, download=True, transform=transform_train)
@@ -129,6 +123,8 @@ def test(epoch):
     with torch.no_grad():
         for batch_idx, (inputs, targets) in enumerate(testloader):
             inputs, targets = inputs.to(device), targets.to(device)
+            if batch_idx == 1:
+              grad_image_test = inputs
             outputs = net(inputs)
             loss = criterion(outputs, targets)
 
