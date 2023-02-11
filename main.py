@@ -99,7 +99,7 @@ scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=200)
 
 # Training
 def train(epoch):
-    pbar = tqdm(train_loader)
+    pbar = tqdm(trainloader)
     net.train()
     train_loss = 0
     correct = 0
