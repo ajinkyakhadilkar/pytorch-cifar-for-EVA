@@ -138,8 +138,8 @@ def test(epoch):
             correct += predicted.eq(targets).sum().item()
 
     print('\nTest set: Average loss: {:.4f}, Accuracy: {}/{} ({:.2f}%)\n'.format(
-            test_loss, correct, len(test_loader.dataset),
-            100. * correct / len(test_loader.dataset)))
+            test_loss/(batch_idx+1), correct, len(testloader.dataset),
+            100. * correct / len(testloader.dataset)))
 
     # Save checkpoint.
     '''
