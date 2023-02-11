@@ -140,6 +140,7 @@ def test(epoch):
                          % (test_loss/(batch_idx+1), 100.*correct/total, correct, total))
 
     # Save checkpoint.
+    '''
     acc = 100.*correct/total
     if acc > best_acc:
         print('Saving..')
@@ -152,9 +153,10 @@ def test(epoch):
             os.mkdir('checkpoint')
         torch.save(state, './checkpoint/ckpt.pth')
         best_acc = acc
+    '''
 
 
-for epoch in range(start_epoch, start_epoch+200):
+for epoch in range(start_epoch, start_epoch+20):
     train(epoch)
     test(epoch)
     scheduler.step()
