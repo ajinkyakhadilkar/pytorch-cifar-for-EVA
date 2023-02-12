@@ -8,12 +8,19 @@ import sys
 import time
 import math
 
+import torch
 import torch.nn as nn
 import torch.nn.init as init
 import torchvision
 import torchvision.transforms as transforms
 
-
+from pytorch_grad_cam import GradCAM
+from pytorch_grad_cam.utils.model_targets import ClassifierOutputTarget
+from pytorch_grad_cam.utils.image import show_cam_on_image
+import torchvision.transforms as T
+from numpy import transpose
+import matplotlib.pyplot as plt
+import numpy as np
 
 def get_mean_and_std(dataset):
     '''Compute the mean and std value of dataset.'''
@@ -155,3 +162,52 @@ def get_test_transforms():
     transforms.ToTensor(),
     transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
   ])
+
+def show_gradcam(inp_image, model):
+  target_layers = [model.module.layer4[-1]]
+
+  cam = GradCAM(model=model, target_layers=target_layers, use_cuda=True)
+
+  targets = [ClassifierOutputTarget(9)]
+
+  # You can also pass aug_smooth=True and eigen_smooth=True, to apply smoothing.
+  grayscale_cam = cam(input_tensor=inp_image, targets=targets)
+
+  # In this example grayscale_cam has only one image in the batch:
+  grayscale_cam = grayscale_cam[0, :]
+  rgb_img = (
+      inp_image.cpu().squeeze().permute(1,2,0).detach().numpy()
+  )
+  print(grayscale_cam.shape)
+  print(rgb_img.shape)
+  visualization = show_cam_on_image(rgb_img, grayscale_cam, use_rgb=True)
+  plt.imshow(visualization)
+ef get_misclassified_images(misclassified_images, misclassified_labels, ground_truth):
+
+d  print('Misclassification \n')
+  for i in range(0, 10):
+    plt.subplot(2, 5, i+1)
+    plt.axis('off')
+    plt.imshow(torch.stack(misclassified_images).cpu().detach().numpy()[i].squeeze())
+    plt.set_title('Incorrect Label: '+ misclassified_labels[i] + 'Correct Label: ' + ground_truth[i])
+
+  print('Correct Labels: ')
+  for i in range(0, len(misclassified_images)):
+    output_line += str(ground_truth[i].item()) + ' '
+    if i ==int((len(misclassified_images)-1)/2) or i==len(misclassified_images)-1:
+      print(output_line + '\n')
+      output_line = ''
+
+  print('Prediction : ')
+  for i in range(0, len(misclassified_images)):
+    output_line += str(misclassified_labels[i].item()) + ' '
+    if i ==int((len(misclassified_images)-1)/2) or i==len(misclassified_images)-1:
+      print(output_line + '\n')
+      output_line = ''
+
+  #cleanup lists
+  missclassified = []
+  expected_label = []
+  missclassified_value = []
+
+  print('Images')
