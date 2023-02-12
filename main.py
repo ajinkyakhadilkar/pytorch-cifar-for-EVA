@@ -18,9 +18,9 @@ from . import utils
 
 net = resnet.ResNet18()
 grad_image_test = []
-
-def set_net(net):
-  net = this.net
+misclassified_images = []
+misclassified_label = []
+ground_truth = []
 
 '''
 parser = argparse.ArgumentParser(description='PyTorch CIFAR10 Training')
@@ -52,6 +52,13 @@ testloader = torch.utils.data.DataLoader(
 
 classes = ('plane', 'car', 'bird', 'cat', 'deer',
            'dog', 'frog', 'horse', 'ship', 'truck')
+
+def get_testloader(apply_transform=False):
+  testset = torchvision.datasets.CIFAR10(
+    root='./data', train=False, download=True, transform=transform_test
+      if apply_transform else transforms.ToTensor())
+  return torch.utils.data.DataLoader(
+    testset, batch_size=100, shuffle=False, num_workers=2)
 
 # Model
 print('==> Building model..')
@@ -98,8 +105,12 @@ def train(epoch):
     train_loss = 0
     correct = 0
     total = 0
+    sampled = False
     for batch_idx, (inputs, targets) in enumerate(pbar):
         inputs, targets = inputs.to(device), targets.to(device)
+        if not sampled:
+          grad_image_test = inputs
+          sampled = True
         optimizer.zero_grad()
         outputs = net(inputs)
         loss = criterion(outputs, targets)
@@ -131,7 +142,14 @@ def test(epoch):
             test_loss += loss.item()
             _, predicted = outputs.max(1)
             total += targets.size(0)
-            correct += predicted.eq(targets).sum().item()
+            results = predicted.eq(targets)
+            correct += results.sum().item()
+            #Collecting missclassified images
+            for i in range(0,len(targets)):
+              if len(misclassified_images) < 10 and not results[i]:
+                misclassified_images.append(inputs[i])
+                ground_truth.append(targets[i])
+                misclassified_label.append(predicted[i])
 
     print('\nTest set: Average loss: {:.4f}, Accuracy: {}/{} ({:.2f}%)\n'.format(
             test_loss/(batch_idx+1), correct, len(testloader.dataset),
