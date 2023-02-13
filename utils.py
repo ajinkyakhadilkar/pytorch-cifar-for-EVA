@@ -225,7 +225,7 @@ def get_misclassified_images(misclassified_images, misclassified_labels, ground_
 def get_gradcam_of_misclassified_images(misclassified_images, misclassified_labels, ground_truth, model, classes):
   output_line=''
   print('Misclassification \n')
-  grads_misclassified_images = [torch.Tensor(utils.show_gradcam(misclassified_image, model, plot=False)) for misclassified_image in misclassified_images]
+  grads_misclassified_images = [torch.Tensor(show_gradcam(misclassified_image, model, plot=False)) for misclassified_image in misclassified_images]
   fig, axs = plt.subplots(2, 5, figsize=(15, 8))
   for i in range(0, 10):
     axs[int(i/5)][int(i%5)].imshow(torch.stack(grads_misclassified_images).cpu().detach().numpy()[i].squeeze())
