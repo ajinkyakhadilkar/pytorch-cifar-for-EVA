@@ -79,8 +79,8 @@ print('==> Building model..')
 #net = SimpleDLA()
 net = net.to(device)
 if device == 'cuda':
-    net = torch.nn.DataParallel(net)
-    cudnn.benchmark = True
+  net = torch.nn.DataParallel(net)
+  cudnn.benchmark = True
 
 '''
 if args.resume:
@@ -100,6 +100,7 @@ scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=200)
 
 # Training
 def train(epoch):
+    global net
     pbar = tqdm(trainloader)
     net.train()
     train_loss = 0
@@ -126,7 +127,7 @@ def train(epoch):
 
 
 def test(epoch):
-    global best_acc
+    global best_acc, net
     net.eval()
     test_loss = 0
     correct = 0

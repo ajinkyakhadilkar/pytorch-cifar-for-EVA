@@ -153,17 +153,17 @@ def get_train_transforms():
     transforms.RandomCrop(32, padding=4),
     transforms.RandomHorizontalFlip(),
     transforms.ToTensor(),
-    transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
+    transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010))
   ])
 
 
 def get_test_transforms():
   return transforms.Compose([
     transforms.ToTensor(),
-    transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
+    transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010))
   ])
 
-def show_gradcam(inp_image, model):
+def show_gradcam(inp_image, model, plot=True):
   target_layers = [model.module.layer4[-1]]
 
   cam = GradCAM(model=model, target_layers=target_layers, use_cuda=True)
@@ -181,15 +181,24 @@ def show_gradcam(inp_image, model):
   print(grayscale_cam.shape)
   print(rgb_img.shape)
   visualization = show_cam_on_image(rgb_img, grayscale_cam, use_rgb=True)
-  plt.imshow(visualization)
-ef get_misclassified_images(misclassified_images, misclassified_labels, ground_truth):
+  if plot:
+    plt.imshow(visualization)
+  return visualization
 
-d  print('Misclassification \n')
+def get_misclassified_images(misclassified_images, misclassified_labels, ground_truth, classes):
+  output_line=''
+  print('Misclassification \n')
+  fig, axs = plt.subplots(2, 5, figsize=(15, 8))
   for i in range(0, 10):
-    plt.subplot(2, 5, i+1)
-    plt.axis('off')
-    plt.imshow(torch.stack(misclassified_images).cpu().detach().numpy()[i].squeeze())
-    plt.set_title('Incorrect Label: '+ misclassified_labels[i] + 'Correct Label: ' + ground_truth[i])
+    axs[int(i/5)][int(i%5)].imshow(torch.stack(misclassified_images).cpu().detach().numpy()[i].squeeze())
+    axs[int(i/5)][int(i%5)].set_title("Incorrect label: " + classes[misclassified_labels[i].item()] + "\n Correct label: " + classes[ground_truth[i].item()])
+    axs[int(i/5)][int(i%5)].axis('off')
+    #plt.subplot(2, 5, i+1)
+    #plt.axis('off')
+    #axs[i%5][int(i/5)].set_title("Incorrect label: " + misclassified_labels[i] + " Correct label: " + ground_truth[i])
+    #plt.suptitle("Incorrect label: " + misclassified_labels[i].item() + " Correct label: " + ground_truth[i.item()])
+    #plt.imshow(torch.stack(misclassified_images).cpu().detach().numpy()[i].squeeze())
+    #plt.set_title('Incorrect Label: '+ misclassified_labels[i].item() + 'Correct Label: ' + ground_truth[i].item())
 
   print('Correct Labels: ')
   for i in range(0, len(misclassified_images)):
@@ -202,6 +211,44 @@ d  print('Misclassification \n')
   for i in range(0, len(misclassified_images)):
     output_line += str(misclassified_labels[i].item()) + ' '
     if i ==int((len(misclassified_images)-1)/2) or i==len(misclassified_images)-1:
+      print(output_line + '\n')
+      output_line = ''
+
+  #cleanup lists
+  missclassified = []
+  expected_label = []
+  missclassified_value = []
+
+  print('Images')
+
+
+def get_gradcam_of_misclassified_images(misclassified_images, misclassified_labels, ground_truth, model, classes):
+  output_line=''
+  print('Misclassification \n')
+  grads_misclassified_images = [torch.Tensor(utils.show_gradcam(misclassified_image, model, plot=False)) for misclassified_image in misclassified_images]
+  fig, axs = plt.subplots(2, 5, figsize=(15, 8))
+  for i in range(0, 10):
+    axs[int(i/5)][int(i%5)].imshow(torch.stack(grads_misclassified_images).cpu().detach().numpy()[i].squeeze())
+    axs[int(i/5)][int(i%5)].set_title("Incorrect label: " + classes[misclassified_labels[i].item()] + "\n Correct label: " + classes[ground_truth[i].item()])
+    axs[int(i/5)][int(i%5)].axis('off')
+    #plt.subplot(2, 5, i+1)
+    #plt.axis('off')
+    #axs[i%5][int(i/5)].set_title("Incorrect label: " + misclassified_labels[i] + " Correct label: " + ground_truth[i])
+    #plt.suptitle("Incorrect label: " + misclassified_labels[i].item() + " Correct label: " + ground_truth[i.item()])
+    #plt.imshow(torch.stack(misclassified_images).cpu().detach().numpy()[i].squeeze())
+    #plt.set_title('Incorrect Label: '+ misclassified_labels[i].item() + 'Correct Label: ' + ground_truth[i].item())
+
+  print('Correct Labels: ')
+  for i in range(0, len(grads_misclassified_images)):
+    output_line += str(ground_truth[i].item()) + ' '
+    if i ==int((len(grads_misclassified_images)-1)/2) or i==len(grads_misclassified_images)-1:
+      print(output_line + '\n')
+      output_line = ''
+
+  print('Prediction : ')
+  for i in range(0, len(grads_misclassified_images)):
+    output_line += str(misclassified_labels[i].item()) + ' '
+    if i ==int((len(grads_misclassified_images)-1)/2) or i==len(grads_misclassified_images)-1:
       print(output_line + '\n')
       output_line = ''
 
