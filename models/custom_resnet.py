@@ -6,20 +6,20 @@ class ResNetBlock(nn.Module):
   def __init__(self, in_channels, out_channels):
     super(ResNetBlock, self).__init__()
     self.convblock1 = nn.Sequential(
-        nn.Conv2d(128, 128, 3, padding=1),
-        nn.BatchNorm2d(128),
+        nn.Conv2d(in_channels, out_channels, 3, padding=1),
+        nn.BatchNorm2d(out_channels),
         nn.ReLU()
     )
     self.convblock2 = nn.Sequential(
-        nn.Conv2d(128, 128, 3, padding=1),
-        nn.BatchNorm2d(128),
+        nn.Conv2d(in_channels, out_channels, 3, padding=1),
+        nn.BatchNorm2d(out_channels),
         nn.ReLU()
     )
 
   def forward(self, x):
     residual = x
     out = self.convblock1(x)
-    out = self.convblovk2(out)
+    out = self.convblock2(out)
     out += residual
     return out
 
@@ -27,11 +27,11 @@ class ResNetBlock(nn.Module):
 class ResNet(nn.Module):
     expansion = 1
 
-    def __init__(self, in_planes, planes, stride=1):
+    def __init__(self):
         super(ResNet, self).__init__()
         # Prep Layer
         self.prep_layer = nn.Sequential( # 32x32 > 32x32 | jin=1 | RF=3
-          nn.Conv2d(32, 64, 3, padding=1),
+          nn.Conv2d(3, 64, 3, padding=1),
           nn.BatchNorm2d(64),
           nn.ReLU()
         )
@@ -56,9 +56,9 @@ class ResNet(nn.Module):
           ResNetBlock(512, 512), # 8x8>8x8 | jin=4 | RF=36,44
         )
         # Maxpool k=4
-        self.mp = nn.MaxPool2d(4, 2) # 8x8 > 3x3 | jin=4 | RF=48,56
+        self.mp = nn.MaxPool2d(4, 4) # 8x8 > 2x2 | jin=4 | RF=48,56
         # FC layer
-        self.fc = nn.Linear(512, 10)
+        self.fc = nn.Linear(2*2*512, 10)
 
     def forward(self, x):
         x = self.prep_layer(x)
@@ -66,6 +66,6 @@ class ResNet(nn.Module):
         x = self.layer2(x)
         x = self.layer3(x)
         x = self.mp(x)
-        x = x.view(9, -1)
+        x = x.view(-1, 2*2*512)
         out = self.fc(x)
         return out
