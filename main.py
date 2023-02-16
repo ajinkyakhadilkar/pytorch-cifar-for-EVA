@@ -86,7 +86,7 @@ optimizer = None
 scheduler = None
 
 def set_net(network):
-  global net, device
+  global net, device, criterion, optimizer, scheduler
   net=network
   net = net.to(device)
   if device == 'cuda':
