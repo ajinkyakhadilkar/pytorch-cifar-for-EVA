@@ -16,12 +16,15 @@ from .models import resnet
 from . import utils
 
 
-net = resnet.ResNet18()
+net = None
 grad_image_test = []
 misclassified_images = []
 misclassified_label = []
 ground_truth = []
 
+
+  
+  
 '''
 parser = argparse.ArgumentParser(description='PyTorch CIFAR10 Training')
 parser.add_argument('--lr', default=0.1, type=float, help='learning rate')
@@ -77,10 +80,13 @@ print('==> Building model..')
 # net = EfficientNetB0()
 # net = RegNetX_200MF()
 #net = SimpleDLA()
-net = net.to(device)
-if device == 'cuda':
-  net = torch.nn.DataParallel(net)
-  cudnn.benchmark = True
+def set_net(network):
+  global net, device
+  net=network
+  net = net.to(device)
+  if device == 'cuda':
+    net = torch.nn.DataParallel(net)
+    cudnn.benchmark = True
 
 '''
 if args.resume:
