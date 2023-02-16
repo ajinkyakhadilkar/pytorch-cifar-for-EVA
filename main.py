@@ -80,6 +80,11 @@ print('==> Building model..')
 # net = EfficientNetB0()
 # net = RegNetX_200MF()
 #net = SimpleDLA()
+
+criterion = None
+optimizer = None
+scheduler = None
+
 def set_net(network):
   global net, device
   net=network
@@ -87,6 +92,10 @@ def set_net(network):
   if device == 'cuda':
     net = torch.nn.DataParallel(net)
     cudnn.benchmark = True
+  criterion = nn.CrossEntropyLoss()
+  optimizer = optim.SGD(net.parameters(), lr=0.001,
+                        momentum=0.9, weight_decay=5e-4)
+  scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=200)
 
 '''
 if args.resume:
@@ -98,10 +107,7 @@ if args.resume:
     best_acc = checkpoint['acc']
     start_epoch = checkpoint['epoch']
 '''
-criterion = nn.CrossEntropyLoss()
-optimizer = optim.SGD(net.parameters(), lr=0.001,
-                      momentum=0.9, weight_decay=5e-4)
-scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=200)
+
 
 
 # Training
