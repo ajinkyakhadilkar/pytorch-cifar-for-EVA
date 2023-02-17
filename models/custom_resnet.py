@@ -20,7 +20,7 @@ class ResNetBlock(nn.Module):
     residual = x
     out = self.convblock1(x)
     out = self.convblock2(out)
-    out += residual
+    out = out + residual
     return out
 
 
@@ -41,7 +41,7 @@ class ResNet(nn.Module):
           nn.MaxPool2d(2, 2), # 32x32 > 16x16 | jin=1 | RF=6 | jout=2
           nn.BatchNorm2d(128),
           nn.ReLU(),
-          ResNetBlock(128, 128), # 16x16 > 16x16 | jin=2 | RF=6,146
+          ResNetBlock(128, 128) # 16x16 > 16x16 | jin=2 | RF=6,146
         )
         # Layer2
         self.layer2 = nn.Sequential(
