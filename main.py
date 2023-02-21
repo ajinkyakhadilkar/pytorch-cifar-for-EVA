@@ -1,5 +1,10 @@
 '''Train CIFAR10 with PyTorch.'''
+import albumentations as A
+
+import numpy as np
+
 import torch
+from torch._C import _get_tracing_state
 import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as F
@@ -56,6 +61,30 @@ testloader = torch.utils.data.DataLoader(
 classes = ('plane', 'car', 'bird', 'cat', 'deer',
            'dog', 'frog', 'horse', 'ship', 'truck')
 
+class Transforms:
+    def __init__(self, transforms: A.Compose):
+        self.transforms = transforms
+
+    def __call__(self, img, *args, **kwargs):
+        return self.transforms(image=np.array(img))
+        
+def prepare_trainloader(train_transform_list):
+  global transform_train, trainset, trainloader
+  transform_train = utils.get_train_transforms(train_transform_list)
+  trainset = torchvision.datasets.CIFAR10(
+    root='./data', train=True, download=True, transform=Transforms(transform_train))
+  trainloader = torch.utils.data.DataLoader(
+    trainset, batch_size=128, shuffle=True, num_workers=2)
+
+def prepare_testloader(test_transform_list):
+  global transform_test, testset, testloader
+  transform_test = utils.get_test_transforms(test_transform_list)
+  testset = torchvision.datasets.CIFAR10(
+    root='./data', train=False, download=True, transform=transform_test)
+  testloader = torch.utils.data.DataLoader(
+    testset, batch_size=100, shuffle=False, num_workers=2)  
+
+
 def get_testloader(apply_transform=False):
   testset = torchvision.datasets.CIFAR10(
     root='./data', train=False, download=True, transform=transform_test
@@ -111,7 +140,7 @@ if args.resume:
 
 
 # Training
-def train(epoch):
+def train(epoch, is_batchwise_scheduler_step=False, is_albumentation=False):
     global net
     pbar = tqdm(trainloader)
     net.train()
@@ -120,6 +149,8 @@ def train(epoch):
     total = 0
     sampled = False
     for batch_idx, (inputs, targets) in enumerate(pbar):
+        if is_albumentation:
+          inputs = inputs['image']
         inputs, targets = inputs.to(device), targets.to(device)
         if not sampled:
           grad_image_test = inputs
@@ -184,8 +215,9 @@ def test(epoch):
         best_acc = acc
     '''
 
-def start_training():
-  for epoch in range(start_epoch, start_epoch+20):
-      train(epoch)
+def start_training(num_epochs=20, is_batchwise_scheduler_step=False, is_albumentation=False):
+  for epoch in range(num_epochs):
+      train(epoch, is_batchwise_scheduler_step, is_albumentation)
       test(epoch)
-      scheduler.step()
+      if not is_batchwise_scheduler_step:
+        scheduler.step()
