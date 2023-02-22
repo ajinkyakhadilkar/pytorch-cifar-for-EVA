@@ -26,7 +26,8 @@ grad_image_test = []
 misclassified_images = []
 misclassified_label = []
 ground_truth = []
-
+lr = []
+train_losses = []
 
   
   
@@ -137,17 +138,25 @@ if args.resume:
     start_epoch = checkpoint['epoch']
 '''
 
+def update_lr(optimizer, lr):
+    for g in optimizer.param_groups:
+        g['lr'] = lr
 
 
 # Training
-def train(epoch, is_batchwise_scheduler_step=False, is_albumentation=False):
-    global net
+def train(epoch, is_batchwise_scheduler_step=False, is_albumentation=False, is_range_test=False):
+    global net, lr, train_losses
     pbar = tqdm(trainloader)
     net.train()
     train_loss = 0
     correct = 0
     total = 0
     sampled = False
+    iteration = 0
+    mult = (100000) ** (1/len(trainloader)) # (max_lr/min_lr) ^ (1/num_iterations) | num_iterations=len_trainloader
+    best_loss = 1e9
+    curr_lr=0
+
     for batch_idx, (inputs, targets) in enumerate(pbar):
         if is_albumentation:
           inputs = inputs['image']
@@ -161,12 +170,30 @@ def train(epoch, is_batchwise_scheduler_step=False, is_albumentation=False):
         loss.backward()
         optimizer.step()
 
+        if is_range_test:
+          iteration = iteration + 1
+          print(iteration)
+          if loss.item() > 8*best_loss:
+            break
+          if loss.item() < best_loss:
+            best_loss = loss.item()
+          update_lr(optimizer, (0.00001*(mult**iteration)))
+          curr_lr = next(iter(optimizer.param_groups))['lr']
+          lr.append(curr_lr)
+          train_losses.append(loss.item())
+          print('\n Current LR:' + str(curr_lr))
+          print('\n Loss: ' + str(loss.item()))
+ 
+
+        if is_batchwise_scheduler_step:
+          scheduler.step()
+
         train_loss += loss.item()
         _, predicted = outputs.max(1)
         total += targets.size(0)
         correct += predicted.eq(targets).sum().item()
 
-        pbar.set_description(desc= f'Epoch={epoch} Loss={train_loss/(batch_idx+1)} batch_id={batch_idx} Accuracy={100*correct/total:0.2f}%')
+        pbar.set_description(desc= f'Epoch={epoch} LR={curr_lr} Loss={train_loss/(batch_idx+1)} batch_id={batch_idx} Accuracy={100*correct/total:0.2f}%')
 
 
 def test(epoch):
@@ -215,9 +242,9 @@ def test(epoch):
         best_acc = acc
     '''
 
-def start_training(num_epochs=20, is_batchwise_scheduler_step=False, is_albumentation=False):
+def start_training(num_epochs=20, is_batchwise_scheduler_step=False, is_albumentation=False, is_range_test=False):
   for epoch in range(num_epochs):
-      train(epoch, is_batchwise_scheduler_step, is_albumentation)
+      train(epoch, is_batchwise_scheduler_step, is_albumentation, is_range_test)
       test(epoch)
-      if not is_batchwise_scheduler_step:
+      if not is_batchwise_scheduler_step and not is_range_test:
         scheduler.step()
