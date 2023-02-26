@@ -270,11 +270,11 @@ def get_gradcam_of_misclassified_images(misclassified_images, misclassified_labe
 def plot_train_and_test_losses(train_losses, test_losses):
     fig, axs = plt.subplots(1,2,figsize=(15,10))
     axs[0].plot(train_losses)
-    axs[0].set_xlabel('Loss')
-    axs[0].set_ylabel('Iterations')
+    axs[0].set_xlabel('Iterations')
+    axs[0].set_ylabel('Loss')
     axs[0].set_title("Training Loss")
     axs[1].plot(test_losses)
-    axs[1].set_xlabel('Loss')
-    axs[1].set_ylabel('Iterations')
+    axs[1].set_xlabel('Iterations')
+    axs[1].set_ylabel('Loss')
     axs[1].set_title("Validation Loss")
 
