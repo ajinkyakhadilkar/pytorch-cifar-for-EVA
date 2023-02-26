@@ -16,6 +16,8 @@ import torch.nn.init as init
 import torchvision
 import torchvision.transforms as transforms
 
+from torch.functional import Tensor
+
 from pytorch_grad_cam import GradCAM
 from pytorch_grad_cam.utils.model_targets import ClassifierOutputTarget
 from pytorch_grad_cam.utils.image import show_cam_on_image
@@ -263,3 +265,16 @@ def get_gradcam_of_misclassified_images(misclassified_images, misclassified_labe
   missclassified_value = []
 
   print('Images')
+
+
+def plot_train_and_test_losses(train_losses, test_losses):
+    fig, axs = plt.subplots(1,2,figsize=(15,10))
+    axs[0].plot(train_losses)
+    axs[0].set_xlabel('Loss')
+    axs[0].set_ylabel('Iterations')
+    axs[0].set_title("Training Loss")
+    axs[1].plot(test_losses)
+    axs[1].set_xlabel('Loss')
+    axs[1].set_ylabel('Iterations')
+    axs[1].set_title("Validation Loss")
+

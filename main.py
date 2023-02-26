@@ -28,6 +28,7 @@ misclassified_label = []
 ground_truth = []
 lr = []
 train_losses = []
+test_losses = []
 
   
   
@@ -171,23 +172,24 @@ def train(epoch, is_batchwise_scheduler_step=False, is_albumentation=False, is_r
         optimizer.step()
 
         if is_range_test:
-          iteration = iteration + 1
-          print(iteration)
-          if loss.item() > 8*best_loss:
-            break
-          if loss.item() < best_loss:
-            best_loss = loss.item()
-          update_lr(optimizer, (0.00001*(mult**iteration)))
-          curr_lr = next(iter(optimizer.param_groups))['lr']
-          lr.append(curr_lr)
-          train_losses.append(loss.item())
-          print('\n Current LR:' + str(curr_lr))
-          print('\n Loss: ' + str(loss.item()))
- 
+            iteration = iteration + 1
+            print(iteration)
+            if loss.item() > 8*best_loss:
+              break
+            if loss.item() < best_loss:
+              best_loss = loss.item()
+            update_lr(optimizer, (0.00001*(mult**iteration)))
+            curr_lr = next(iter(optimizer.param_groups))['lr']
+            lr.append(curr_lr)
+            print('\n Current LR:' + str(curr_lr))
+            print('\n Loss: ' + str(loss.item()))
+        else:
+            curr_lr = next(iter(optimizer.param_groups))['lr']
 
         if is_batchwise_scheduler_step:
           scheduler.step()
 
+        train_losses.append(loss.item())
         train_loss += loss.item()
         _, predicted = outputs.max(1)
         total += targets.size(0)
@@ -221,6 +223,8 @@ def test(epoch):
                 misclassified_images.append(inputs[i])
                 ground_truth.append(targets[i])
                 misclassified_label.append(predicted[i])
+                
+            test_losses.append(loss.item())
 
     print('\nTest set: Average loss: {:.4f}, Accuracy: {}/{} ({:.2f}%)\n'.format(
             test_loss/(batch_idx+1), correct, len(testloader.dataset),
