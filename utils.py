@@ -170,6 +170,7 @@ def get_test_transforms():
     transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010))
   ])
 
+'''
 def show_gradcam(inp_image, model, plot=True):
   target_layers = [model.module.layer4[-1]]
 
@@ -177,8 +178,9 @@ def show_gradcam(inp_image, model, plot=True):
 
   targets = [ClassifierOutputTarget(9)]
 
+  print(inp_image.size())
   # You can also pass aug_smooth=True and eigen_smooth=True, to apply smoothing.
-  grayscale_cam = cam(input_tensor=inp_image, targets=targets)
+  grayscale_cam = cam(input_tensor=inp_image.squeeze(), targets=targets)
 
   # In this example grayscale_cam has only one image in the batch:
   grayscale_cam = grayscale_cam[0, :]
@@ -191,7 +193,13 @@ def show_gradcam(inp_image, model, plot=True):
   if plot:
     plt.imshow(visualization)
   return visualization
-
+'''
+def imshow(img):
+  img = img / 2 + 0.5     # Unnormalize
+  npimg = img
+  npimg = np.clip(npimg, 0, 1)  # Add this line to clip the values
+  return np.transpose(npimg, (1, 2, 0))  # Convert from Tensor image
+  
 def get_misclassified_images(misclassified_images, misclassified_labels, ground_truth, classes):
   output_line=''
   print('Misclassification \n')
@@ -228,7 +236,7 @@ def get_misclassified_images(misclassified_images, misclassified_labels, ground_
 
   print('Images')
 
-
+'''
 def get_gradcam_of_misclassified_images(misclassified_images, misclassified_labels, ground_truth, model, classes):
   output_line=''
   print('Misclassification \n')
@@ -265,7 +273,29 @@ def get_gradcam_of_misclassified_images(misclassified_images, misclassified_labe
   missclassified_value = []
 
   print('Images')
+'''
+def get_gradcam_of_misclassified_images(misclassified_images, misclassified_labels, ground_truth, model, classes):
+  target_layers = [model.module.layer4[-1]]
+  cam = GradCAM(model=model, target_layers=target_layers, use_cuda=True)
 
+  fig, axs = plt.subplots(2, 5, figsize=(16, 8))
+
+  for i, image_tensor in enumerate(misclassified_images):
+
+      image = image_tensor.cpu().numpy()
+      grayscale_cam = cam(input_tensor=image_tensor.reshape(1,3,32,32), targets=[ClassifierOutputTarget(ground_truth[i].item())],aug_smooth=True,eigen_smooth=True)
+      grayscale_cam = grayscale_cam[0, :]
+      visualization = show_cam_on_image(imshow(image), grayscale_cam, use_rgb=True,image_weight=0.6)
+
+
+      axs[int(i/5)][int(i%5)].imshow(visualization,interpolation='bilinear')
+      axs[int(i/5)][int(i%5)].set_title("Incorrect label: " + classes[misclassified_labels[i].item()] + "\n Correct label: " + classes[ground_truth[i].item()])
+      axs[int(i/5)][int(i%5)].axis('off')
+
+      #ax.imshow(np.transpose(imshow(visualization), (2, 0, 1)))  # Display the image
+
+  plt.tight_layout()  # To provide sufficient spacing between subplots
+  plt.show()
 
 def plot_train_and_test_losses(train_losses, test_losses):
     fig, axs = plt.subplots(1,2,figsize=(15,10))
